@@ -1,0 +1,19 @@
+node_modules
+
+/backend/api/migrations
+/backend/api/parser/myenv
+
+# Ignore virtual environment directory
+env/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore IDE/editor specific files
+.vscode/
+.idea/
+
+/frontend/src/styles/fonts
+/frontend/src/styles/images

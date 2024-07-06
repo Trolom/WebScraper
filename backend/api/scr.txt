@@ -1,0 +1,250 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import csv
+import time
+from ast import literal_eval
+from .proxy import ProxyRotator
+from .rotator import Rotator
+
+
+class MyGoogleBotScraper: #scraper should be initialized every time the scraper is used
+    def __init__(self, user_agents):
+        self.rotator = Rotator(user_agents)
+        self.driver = None
+        self.init_driver()
+
+    def init_driver(self):
+        chrome_options = Options()
+        # chrome_options.add_argument("--headless")
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+
+        #proxy = self.proxy_rotator.get()
+        #chrome_options.add_argument(f'--proxy-server={proxy}')
+
+        user_agent = self.rotator.get()
+        chrome_options.add_argument(f'user-agent={user_agent}')
+
+        self.driver = webdriver.Chrome(options=chrome_options)
+
+    def close_browser(self):
+        if self.driver:
+            self.driver.quit()
+            self.driver = None
+
+    def detect_page_type(self):
+        # Check for the presence of pagination controls to determine the page type
+        pagination_links = self.driver.find_elements(By.CSS_SELECTOR, 'a.nBDE1b.G5eFlf')
+        if pagination_links:
+            return 'pagination'
+        else:
+            return 'infinite_scroll'
+
+    def rotate_user_agent(self):
+        self.close_browser()
+        self.init_driver()
+
+    def process_url(self, search_terms, city, country_code):
+        exclude_sites = ["youtube.com", "wikipedia.org"]
+        exclusions = ' '.join(f"-site:{site}" for site in exclude_sites)
+        final_query = f"{search_terms} {city} {exclusions}"
+        encoded_query = final_query.replace(' ', '+')
+        search_url = f"https://www.google.com/search?q={encoded_query}&gl={country_code}"
+        return search_url
+
+    def wait_for_consent_popup(self, retries=1, wait_time=2):
+        consent_button_id = 'L2AGLb'
+        for attempt in range(retries):
+            try:
+                wait = WebDriverWait(self.driver, wait_time)
+                consent_button = wait.until(EC.visibility_of_element_located((By.ID, consent_button_id)))
+                consent_button.click()
+                print("Consent popup handled successfully.")
+                return 1
+            except TimeoutException:
+                print(f"Consent popup not found on attempt {attempt + 1}. Retrying...")
+                time.sleep(wait_time)  # Wait before trying again
+        print("Failed to handle consent popup after several attempts.")
+        return 0
+
+    def accept_consent_google_com(self, retries=1, wait_time=2):
+        for attempt in range(retries):
+            if "consent.google.com" in self.driver.current_url:
+                try:
+                    wait_rdr = WebDriverWait(self.driver, wait_time)
+                    # First try to find the input button by aria-label
+                    try:
+                        accept_button = wait_rdr.until(
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[aria-label="Accept all"]'))
+                        )
+                    except (NoSuchElementException, TimeoutException):
+                        # If not found, try to find the span button by class
+                        accept_button = wait_rdr.until(
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Accept all"]'))
+                        )
+                    accept_button.click()
+                    print("Consent accepted on Google consent page.")
+                    return 1
+                except Exception as e:
+                    print(f"Error while accepting consent on attempt {attempt + 1}: {e}")
+                    time.sleep(wait_time)
+        print("Failed to accept consent after several attempts.")
+        return 0
+
+    def infinite_scroll_button(self, wait_time=25):
+        try:
+            load_more_button = WebDriverWait(self.driver, wait_time).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'a.T7sFge.sW9g3e.VknLRd'))
+            )
+            if "transform: scale(0);" in load_more_button.get_attribute("style"):
+                print("'Load More' button is hidden. Ending scroll.")
+                return 0
+        except (NoSuchElementException, TimeoutException):
+            print("Error occured.")
+            return 0
+
+        if load_more_button:
+            print("Found 'Load More' button, clicking.")
+            self.driver.execute_script("arguments[0].click();", load_more_button)
+            time.sleep(wait_time)
+            return 1
+        return 0
+
+    def pagination_button_first_type(self, wait_time=25, use_second_button=False):
+        try:
+            selector = 'a.nBDE1b.G5eFlf'
+            all_buttons = WebDriverWait(self.driver, wait_time).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, selector))
+            )
+            if use_second_button and len(all_buttons) > 1:
+                load_more_button = all_buttons[1]  # Click the second button on the second page
+            else:
+                load_more_button = all_buttons[0]  # Default to the first button
+        except (NoSuchElementException, TimeoutException):
+            print("No 'Load More' button found or timed out waiting for it.")
+            return 0
+
+        if load_more_button:
+            print("Found 'Next page' button, clicking.")
+            self.driver.execute_script("arguments[0].click();", load_more_button)
+            time.sleep(wait_time)
+            return 1
+        return 0
+
+    def pagination_button_second_type(self, wait_time=25, use_second_button=False): #i think this one does not work
+        try:
+            selector = 'td.d6cvqb.BBwThe a'
+            next_button = WebDriverWait(self.driver, wait_time).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
+            )
+        except (NoSuchElementException, TimeoutException):
+            print("No 'Load More' button found or timed out waiting for it.")
+            return 0
+
+        if next_button:
+            print("Found 'Next page' button, clicking.")
+            self.driver.execute_script("arguments[0].click();", next_button)
+            time.sleep(wait_time)
+            return 1
+        return 0
+
+    def get_elements(self, selector): #'div.yuRUbf a' # div.P8ujBc.v5yQqb.jqWpsc a #pagination: # div.egMi0.kCrYT a
+        elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+        links = [element.get_attribute('href') for element in elements if element.get_attribute('href')]
+        for link in links:
+            print({'URL': link})
+        return links
+
+
+    def get_search_results(self, search_term, city, country):
+        self.rotate_user_agent()
+        start_url = self.process_url(search_term, city, country)
+        self.driver.get(start_url)
+
+        self.accept_consent_google_com()
+        self.wait_for_consent_popup()
+
+        time.sleep(5)
+        links = []
+        loop_count = 0
+
+        if self.detect_page_type() == 'infinite_scroll':
+            last_height = self.driver.execute_script("return document.body.scrollHeight")
+            while loop_count < 10:
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(5)
+                new_height = self.driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    if self.infinite_scroll_button() == 0:
+                        break
+                    last_height = self.driver.execute_script("return document.body.scrollHeight")
+                else:
+                    last_height = new_height
+
+                links.extend(self.get_elements('div.yuRUbf a'))
+                if not links:
+                    links.extend(self.get_elements('div.P8ujBc.v5yQqb.jqWpsc a'))
+                loop_count += 1
+        else:
+            typeButton = 0
+            while loop_count < 10:
+                links.extend(self.get_elements('div.egMi0.kCrYT a'))
+                if typeButton == 0:
+                    if self.pagination_button_first_type() == 1:
+                        typeButton = 1
+                    elif self.pagination_button_second_type() == 1:
+                        typeButton = 2
+                    else:
+                        print("None of the buttons worked!!")
+                        break
+                if typeButton == 1:
+                    if self.pagination_button_first_type() == 0:
+                        return links
+                else:
+                    if self.pagination_button_second_type() == 0:
+                        return links
+                loop_count += 1
+
+        self.close_browser()
+        return links
+
+
+
+def read_csv(csv_file_path):
+    user_agents = []
+
+    with open(csv_file_path, mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            user_agent = row[0]
+            user_agents.append(user_agent)
+
+    return user_agents
+
+
+def load_proxies(proxy_file_path):
+    with open(proxy_file_path, 'r') as file:
+        proxies = [line.strip() for line in file if line.strip()]
+    return proxies
+
+if __name__ == '__main__':
+    queries = ['laser wax', 'waxing']
+    user_agents = read_csv("u_list.txt")
+    proxies = load_proxies("p_valid.txt")
+
+    scraper = MyGoogleBotScraper(user_agents, proxies)
+    results = []
+    for query in queries:
+        results.append(scraper.get_search_results(query, 'us'))
+    scraper.close_browser()
+
+    csv_file_name = "links.csv"
+
+    with open(csv_file_name, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        for link in results:
+            writer.writerow([link])

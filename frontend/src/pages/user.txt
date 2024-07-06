@@ -1,0 +1,139 @@
+<div className={`tab-pane fade ${activeTab === 'account-social-links' ? 'active show' : ''}`} id="account-social-links">
+                                <div className="card-body pb-2">
+                                    <div className="form-group">
+                                        <label className="form-label">Twitter</label>
+                                        <input type="text" className="form-control" name="twitter" value={formData.twitter} onChange={handleChange} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Facebook</label>
+                                        <input type="text" className="form-control" name="facebook" value={formData.facebook} onChange={handleChange} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Google+</label>
+                                        <input type="text" className="form-control" name="googlePlus" value={formData.googlePlus} onChange={handleChange} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">LinkedIn</label>
+                                        <input type="text" className="form-control" name="linkedin" value={formData.linkedin} onChange={handleChange} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Instagram</label>
+                                        <input type="text" className="form-control" name="instagram" value={formData.instagram} onChange={handleChange} />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={`tab-pane fade ${activeTab === 'account-connections' ? 'active show' : ''}`} id="account-connections">
+                                <div className="card-body">
+                                    <button type="button" className="btn btn-twitter">Connect to <strong>Twitter</strong></button>
+                                </div>
+                                <hr className="border-light m-0" />
+                                <div className="card-body">
+                                    <h5 className="mb-2">
+                                        <a href="#" className="float-right text-muted text-tiny"><i className="ion ion-md-close"></i> Remove</a>
+                                        <i className="ion ion-logo-google text-google"></i>
+                                        You are connected to Google:
+                                    </h5>
+                                    <a href="/cdn-cgi/l/email-protection" className="__cf_email__" data-cfemail="c4aaa9a5bcb3a1a8a884a9a5ada8eaa7aba9">[email&#160;protected]</a>
+                                </div>
+                                <hr className="border-light m-0" />
+                                <div className="card-body">
+                                    <button type="button" className="btn btn-facebook">Connect to <strong>Facebook</strong></button>
+                                </div>
+                                <hr className="border-light m-0" />
+                                <div className="card-body">
+                                    <button type="button" className="btn btn-instagram">Connect to <strong>Instagram</strong></button>
+                                </div>
+                            </div>
+                            <div className={`tab-pane fade ${activeTab === 'account-notifications' ? 'active show' : ''}`} id="account-notifications">
+                                <div className="card-body pb-2">
+                                    <h6 className="mb-4">Activity</h6>
+                                    <div className="form-group">
+                                        <label className="switcher">
+                                            <input type="checkbox" className="switcher-input" name="emailComments" checked={formData.emailComments} onChange={handleChange} />
+                                            <span className="switcher-indicator">
+                                                <span className="switcher-yes"></span>
+                                                <span className="switcher-no"></span>
+                                            </span>
+                                            <span className="switcher-label">Email me when someone comments on my article</span>
+                                        </label>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="switcher">
+                                            <input type="checkbox" className="switcher-input" name="emailAnswers" checked={formData.emailAnswers} onChange={handleChange} />
+                                            <span className="switcher-indicator">
+                                                <span className="switcher-yes"></span>
+                                                <span className="switcher-no"></span>
+                                            </span>
+                                            <span className="switcher-label">Email me when someone answers on my forum thread</span>
+                                        </label>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="switcher">
+                                            <input type="checkbox" className="switcher-input" name="emailFollows" checked={formData.emailFollows} onChange={handleChange} />
+                                            <span className="switcher-indicator">
+                                                <span className="switcher-yes"></span>
+                                                <span className="switcher-no"></span>
+                                            </span>
+                                            <span className="switcher-label">Email me when someone follows me</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <hr className="border-light m-0" />
+                                <div className="card-body pb-2">
+                                    <h6 className="mb-4">Application</h6>
+                                    <div className="form-group">
+                                        <label className="switcher">
+                                            <input type="checkbox" className="switcher-input" name="news" checked={formData.news} onChange={handleChange} />
+                                            <span className="switcher-indicator">
+                                                <span className="switcher-yes"></span>
+                                                <span className="switcher-no"></span>
+                                            </span>
+                                            <span className="switcher-label">News and announcements</span>
+                                        </label>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="switcher">
+                                            <input type="checkbox" className="switcher-input" name="productUpdates" checked={formData.productUpdates} onChange={handleChange} />
+                                            <span className="switcher-indicator">
+                                                <span className="switcher-yes"></span>
+                                                <span className="switcher-no"></span>
+                                            </span>
+                                            <span className="switcher-label">Weekly product updates</span>
+                                        </label>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="switcher">
+                                            <input type="checkbox" className="switcher-input" name="blogDigest" checked={formData.blogDigest} onChange={handleChange} />
+                                            <span className="switcher-indicator">
+                                                <span className="switcher-yes"></span>
+                                                <span className="switcher-no"></span>
+                                            </span>
+                                            <span className="switcher-label">Weekly blog digest</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+
+
+<a 
+                                className={`list-group-item list-group-item-action ${activeTab === 'account-social-links' ? 'active' : ''}`} 
+                                onClick={() => handleTabChange('account-social-links')}
+                            >
+                                Social links
+                            </a>
+                            <a 
+                                className={`list-group-item list-group-item-action ${activeTab === 'account-connections' ? 'active' : ''}`} 
+                                onClick={() => handleTabChange('account-connections')}
+                            >
+                                Connections
+                            </a>
+                            <a 
+                                className={`list-group-item list-group-item-action ${activeTab === 'account-notifications' ? 'active' : ''}`} 
+                                onClick={() => handleTabChange('account-notifications')}
+                            >
+                                Notifications
+                            </a>
