@@ -34,6 +34,9 @@ class WebScraper:
             13: 'Computers and Technology', 14: 'Business/Corporate', 15: 'Adult'
         }
 
+        self.custom_order = {category: i for i, category in enumerate(['Health and Fitness', 'Business/Corporate', 'Sports', 'Photography', 'Education', 'Computers and Technology', 'Law and Government', 'Social Networking and Messaging', 'Games', 'Forums', 'Food', 'Adult', 'News', 'Travel', 'Streaming Services', 'E-Commerce'])}
+
+
     def analyze_website(self, website, soup):
         try:
             # Fetch website content
@@ -84,9 +87,6 @@ class WebScraper:
                 category = self.analyze_website(link, soup)
                 print("Category:", category)
 
-            if category in ['News', 'Streaming Services', 'E-Commerce']:
-                return set(), set(), {}, category
-
             emails, phones, links_dict = self.main_method(soup)
 
             if is_contact:
@@ -122,7 +122,7 @@ class WebScraper:
     def process_dataframe(self, df):
         list_tuples = []
         driver = self.driver_factory.create_driver()
-        for index, row in df.sample(3).iterrows():
+        for index, row in df.iterrows():
             print(row['domain'])
             found_emails, found_phones, found_links, category = self.parse_links(row['domain'], driver)
 
@@ -139,4 +139,18 @@ class WebScraper:
 
         dataframe = pd.DataFrame(list_tuples,
                                  columns=['Link', 'Emails', 'Phones', 'Facebook', 'Instagram', 'YouTube', 'Category'])
+        
+        # Create a new column for custom order using the custom_order dictionary
+        try:
+            dataframe['CategoryOrder'] = dataframe['Category'].apply(lambda x: self.custom_order[x])
+        except KeyError as e:
+            print(f"KeyError: {e}. Possible categories: {list(self.custom_order.keys())}")
+            raise
+
+        # Sort the DataFrame by the new column
+        dataframe = dataframe.sort_values(by='CategoryOrder')
+
+        # Drop the new column and reset index
+        dataframe = dataframe.drop(columns='CategoryOrder').reset_index(drop=True)
+
         return dataframe
